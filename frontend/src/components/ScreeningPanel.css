@@ -1,0 +1,351 @@
+.screening-panel {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.screening-panel h2 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.screening-panel.empty .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #718096;
+}
+
+.candidate-detail {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.detail-header h3 {
+    color: #fff;
+    margin: 0 0 4px 0;
+}
+
+.detail-header p {
+    color: #a0aec0;
+    margin: 0 0 8px 0;
+}
+
+.contact-info {
+    display: flex;
+    gap: 16px;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.skills-section h4 {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skill-badge {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.no-skills {
+    color: #4a5568;
+    font-style: italic;
+}
+
+.job-selection {
+    margin-bottom: 20px;
+}
+
+.job-selection h4 {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+}
+
+.job-selection select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.job-selection select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.no-jobs {
+    color: #718096;
+    font-style: italic;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-generate,
+.btn-call {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-generate:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-call {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.btn-call:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(72, 187, 120, 0.4);
+}
+
+.btn-generate:disabled,
+.btn-call:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.questions-preview {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.questions-preview h4 {
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.questions-preview ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.questions-preview li {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.questions-preview li:last-child {
+    border-bottom: none;
+}
+
+.q-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #667eea;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.q-text {
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.call-status {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.call-status.status-initiated {
+    border-left-color: #48bb78;
+}
+
+.call-status.status-pending {
+    border-left-color: #ed8936;
+}
+
+.call-status.status-completed {
+    border-left-color: #667eea;
+}
+
+.call-status h4 {
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.status-label {
+    color: #a0aec0;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.initiated {
+    background: rgba(72, 187, 120, 0.2);
+    color: #48bb78;
+}
+
+.status-badge.pending {
+    background: rgba(237, 137, 54, 0.2);
+    color: #ed8936;
+}
+
+.status-badge.completed {
+    background: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+}
+
+.status-badge.failed {
+    background: rgba(252, 129, 129, 0.2);
+    color: #fc8181;
+}
+
+.status-details {
+    margin-bottom: 12px;
+}
+
+.status-details p {
+    color: #a0aec0;
+    margin: 4px 0;
+    display: flex;
+    gap: 8px;
+}
+
+.status-details span {
+    color: #718096;
+}
+
+.call-status code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.call-info {
+    color: #48bb78;
+    font-weight: 500;
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(72, 187, 120, 0.1);
+    border-radius: 8px;
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(252, 129, 129, 0.1);
+    border: 1px solid rgba(252, 129, 129, 0.3);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    color: #fc8181;
+}
+
+.error-banner p {
+    flex: 1;
+    margin: 0;
+}
+
+.error-banner button {
+    background: none;
+    border: none;
+    color: #fc8181;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 1rem;
+}
+
+.error-banner button:hover {
+    opacity: 0.7;
+}
+
+.transcript {
+    margin-top: 16px;
+}
+
+.transcript h5 {
+    color: #a0aec0;
+    margin-bottom: 8px;
+}
+
+.transcript pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    overflow-x: auto;
+}

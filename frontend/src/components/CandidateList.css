@@ -1,0 +1,137 @@
+.candidate-list {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.candidate-list h2 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+}
+
+.empty-state .hint {
+    font-size: 0.875rem;
+    color: #4a5568;
+}
+
+.candidates-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.candidate-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.candidate-card:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateX(4px);
+}
+
+.candidate-card.selected {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+}
+
+.candidate-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.candidate-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.candidate-info h3 {
+    color: #fff;
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.candidate-info .job-title {
+    color: #a0aec0;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.candidate-info .company {
+    color: #718096;
+    font-size: 0.75rem;
+    margin: 2px 0 8px 0;
+}
+
+.skills-preview {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.skill-tag {
+    background: rgba(72, 187, 120, 0.15);
+    color: #48bb78;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.skill-more {
+    color: #718096;
+    font-size: 0.7rem;
+}
+
+.candidate-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.exp-badge {
+    background: rgba(237, 137, 54, 0.15);
+    color: #ed8936;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.has-phone,
+.has-email {
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
