@@ -1,28 +1,33 @@
 import { useState } from 'react';
 import { createJob } from '../api/client';
 import type { JobDescription } from '../types';
-import './JobForm.css';
+import './AddJobModal.css';
 
-interface JobFormProps {
+interface AddJobModalProps {
+    isOpen: boolean;
+    onClose: () => void;
     onJobCreated: (job: JobDescription) => void;
-    jobs?: JobDescription[];
 }
 
-export function JobForm({ onJobCreated, jobs = [] }: JobFormProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
+export function AddJobModal({ isOpen, onClose, onJobCreated }: AddJobModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         title: '',
         company: '',
         description: '',
         required_skills: '',
-        preferred_skills: '',
         location: '',
     });
 
+    if (!isOpen) return null;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.title || !formData.description) return;
+
         setIsSubmitting(true);
+        setError(null);
 
         try {
             const job = await createJob({
@@ -30,53 +35,31 @@ export function JobForm({ onJobCreated, jobs = [] }: JobFormProps) {
                 company: formData.company || undefined,
                 description: formData.description,
                 required_skills: formData.required_skills.split(',').map(s => s.trim()).filter(Boolean),
-                preferred_skills: formData.preferred_skills.split(',').map(s => s.trim()).filter(Boolean),
+                preferred_skills: [],
                 location: formData.location || undefined,
             });
 
             onJobCreated(job);
-            setFormData({
-                title: '',
-                company: '',
-                description: '',
-                required_skills: '',
-                preferred_skills: '',
-                location: '',
-            });
-            setIsExpanded(false);
+            setFormData({ title: '', company: '', description: '', required_skills: '', location: '' });
+            onClose();
         } catch (err) {
-            console.error('Failed to create job:', err);
+            setError(err instanceof Error ? err.message : 'Failed to create job');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="job-form">
-            {jobs.length > 0 && (
-                <div className="jobs-list">
-                    <p className="job-count">{jobs.length} job{jobs.length !== 1 ? 's' : ''} created</p>
-                    {jobs.slice(0, 3).map((job) => (
-                        <div key={job.id} className="job-item">
-                            <div className="job-item-info">
-                                <h4>{job.title}</h4>
-                                {job.company && <p>{job.company}</p>}
-                            </div>
-                        </div>
-                    ))}
-                    {jobs.length > 3 && (
-                        <p className="job-count">+{jobs.length - 3} more</p>
-                    )}
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>New Job Description</h2>
+                    <button className="close-btn" onClick={onClose}>×</button>
                 </div>
-            )}
 
-            <div className="job-form-header" onClick={() => setIsExpanded(!isExpanded)}>
-                <h3>{isExpanded ? 'New Job Description' : '+ Add Job Description'}</h3>
-                <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</span>
-            </div>
+                <form className="modal-body" onSubmit={handleSubmit}>
+                    {error && <div className="form-error">{error}</div>}
 
-            {isExpanded && (
-                <form onSubmit={handleSubmit}>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Job Title *</label>
@@ -104,8 +87,8 @@ export function JobForm({ onJobCreated, jobs = [] }: JobFormProps) {
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Describe the role and responsibilities..."
-                            rows={3}
+                            placeholder="Describe the role, responsibilities, and requirements..."
+                            rows={4}
                             required
                         />
                     </div>
@@ -117,7 +100,7 @@ export function JobForm({ onJobCreated, jobs = [] }: JobFormProps) {
                                 type="text"
                                 value={formData.required_skills}
                                 onChange={(e) => setFormData({ ...formData, required_skills: e.target.value })}
-                                placeholder="Python, React (comma-separated)"
+                                placeholder="Python, React, AWS (comma-separated)"
                             />
                         </div>
                         <div className="form-group">
@@ -126,16 +109,21 @@ export function JobForm({ onJobCreated, jobs = [] }: JobFormProps) {
                                 type="text"
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                placeholder="e.g., Remote"
+                                placeholder="e.g., Remote, NYC"
                             />
                         </div>
                     </div>
 
-                    <button type="submit" className="submit-btn" disabled={isSubmitting}>
-                        {isSubmitting ? 'Creating...' : 'Create Job'}
-                    </button>
+                    <div className="modal-actions">
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Creating...' : 'Create Job'}
+                        </button>
+                    </div>
                 </form>
-            )}
+            </div>
         </div>
     );
 }

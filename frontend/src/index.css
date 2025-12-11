@@ -1,40 +1,112 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* === COLOR SYSTEM (Easy to replace) === */
+  /* Primary Brand */
+  --brand-primary: #0f766e;
+  --brand-primary-hover: #14b8a6;
+  --brand-primary-subtle: #f0fdfa;
+  --brand-primary-border: #99f6e4;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-success-bg: #f0fdf4;
+  --color-warning: #eab308;
+  --color-warning-bg: #fefce8;
+  --color-error: #ef4444;
+  --color-error-bg: #fef2f2;
+
+  /* Surfaces */
+  --surface-base: #f8fafc;
+  --surface-raised: #ffffff;
+  --surface-overlay: rgba(0, 0, 0, 0.6);
+  --surface-hover: #f1f5f9;
+  --surface-active: #e2e8f0;
+
+  /* Text - High Contrast */
+  --text-base: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === TYPOGRAPHY SCALE === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.8125rem;
+  /* 13px */
+  --text-base: 0.875rem;
+  /* 14px */
+  --text-lg: 1rem;
+  /* 16px */
+  --text-xl: 1.125rem;
+  /* 18px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+
+  /* === SPACING === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Root Setup */
+  font-family: var(--font-family);
   line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0f0f1a;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  color: var(--text-base);
+  background: var(--surface-base);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #667eea;
-  text-decoration: inherit;
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-a:hover {
-  color: #764ba2;
-}
-
-#root {
-  width: 100%;
+body {
+  background: var(--surface-base);
   min-height: 100vh;
 }
 
-button {
-  font-family: inherit;
+#root {
+  min-height: 100vh;
 }
 
-select option {
-  background: #1a1a2e;
-  color: #fff;
+/* Scrollbar - Spotify style */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }

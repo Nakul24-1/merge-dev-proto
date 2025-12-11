@@ -1,0 +1,132 @@
+.integration-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.integration-error {
+    font-size: var(--text-xs);
+    color: var(--color-error);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-error-bg);
+    border-radius: var(--radius-sm);
+}
+
+.integration-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background: var(--surface-hover);
+    border-radius: var(--radius-full);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    position: relative;
+}
+
+.status-item.clickable {
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+}
+
+.status-item.clickable:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.status-item .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--text-muted);
+    transition: background 0.2s;
+}
+
+.status-item.connected .status-dot {
+    background: var(--color-success);
+}
+
+.status-item .status-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.status-item.connected .status-label {
+    color: var(--text-base);
+}
+
+/* Dropdown Menu */
+.status-dropdown {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-base);
+    border: 1px solid var(--border-base);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.status-dropdown button {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: var(--text-sm);
+    color: var(--text-base);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.status-dropdown button:hover {
+    background: var(--surface-hover);
+}
+
+.status-dropdown button:last-child {
+    color: var(--color-error);
+}
+
+/* Manage Connections Button */
+.btn-manage-connections {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: white;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+.btn-manage-connections:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-manage-connections:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-manage-connections svg {
+    flex-shrink: 0;
+}

@@ -8,13 +8,28 @@ from app.services.resume_parser import parse_resume
 from app.services.screening_service import generate_screening_questions
 from app.services.elevenlabs_service import initiate_outbound_call, get_conversation_details
 from app.api.endpoints.webhooks import register_candidate_phone
+from app.db.database import (
+    init_db, 
+    seed_dummy_data, 
+    get_all_candidates, 
+    get_all_jobs, 
+    get_candidate_by_id, 
+    get_job_by_id,
+    upsert_candidate,
+    upsert_job,
+    upsert_call,
+    get_call_by_id,
+    delete_candidate as db_delete_candidate,
+    delete_job as db_delete_job
+)
 
 router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
-# In-memory storage for demo purposes
-candidates_db: dict[str, Candidate] = {}
-jobs_db: dict[str, JobDescription] = {}
-calls_db: dict[str, CallStatus] = {}
+# Initialize database on import (ensure tables exist)
+init_db()
+seed_dummy_data()
+
+# ============ CANDIDATE LIST ROUTES ============
 
 @router.post("/upload-resume", response_model=Candidate)
 async def upload_resume(file: UploadFile = File(...)):
@@ -35,55 +50,77 @@ async def upload_resume(file: UploadFile = File(...)):
     candidate = await parse_resume(content, file.filename)
     candidate.id = str(uuid.uuid4())
     
-    # Store in our in-memory db
-    candidates_db[candidate.id] = candidate
+    # Persist to DB
+    candidate_dict = candidate.dict()
+    upsert_candidate(candidate_dict)
     
     return candidate
 
 @router.get("/", response_model=List[Candidate])
-async def list_candidates():
+def list_candidates():
     """
     List all uploaded candidates.
     """
-    return list(candidates_db.values())
+    candidates_data = get_all_candidates()
+    return [Candidate(**c) for c in candidates_data]
 
-@router.get("/{candidate_id}", response_model=Candidate)
-async def get_candidate(candidate_id: str):
-    """
-    Get a specific candidate by ID.
-    """
-    if candidate_id not in candidates_db:
-        raise HTTPException(status_code=404, detail="Candidate not found")
-    return candidates_db[candidate_id]
+
+# ============ JOB ROUTES (MUST BE BEFORE /{candidate_id}) ============
 
 @router.post("/jobs", response_model=JobDescription)
-async def create_job(job: JobDescription):
+def create_job(job: JobDescription):
     """
     Create a new job description for screening.
     """
     job.id = str(uuid.uuid4())
-    jobs_db[job.id] = job
+    upsert_job(job.dict())
     return job
 
 @router.get("/jobs/", response_model=List[JobDescription])
-async def list_jobs():
+def list_jobs():
     """
     List all job descriptions.
     """
-    return list(jobs_db.values())
+    jobs_data = get_all_jobs()
+    return [JobDescription(**j) for j in jobs_data]
+
+@router.put("/jobs/{job_id}", response_model=JobDescription)
+def update_job(job_id: str, job: JobDescription):
+    """
+    Update an existing job description.
+    """
+    job.id = job_id
+    upsert_job(job.dict())
+    return job
+
+@router.delete("/jobs/{job_id}")
+def delete_job(job_id: str):
+    """
+    Delete a job description by ID.
+    """
+    deleted = db_delete_job(job_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"message": "Job deleted successfully", "id": job_id}
+
+
+# ============ SCREENING ROUTES ============
 
 @router.post("/generate-questions", response_model=List[ScreeningQuestion])
 async def generate_questions(candidate_id: str, job_id: str):
     """
     Generate screening questions based on candidate resume and job description.
     """
-    if candidate_id not in candidates_db:
+    candidate_data = get_candidate_by_id(candidate_id)
+    if not candidate_data:
         raise HTTPException(status_code=404, detail="Candidate not found")
-    if job_id not in jobs_db:
+        
+    job_data = get_job_by_id(job_id)
+    if not job_data:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    candidate = candidates_db[candidate_id]
-    job = jobs_db[job_id]
+    candidate = Candidate(**candidate_data)
+    job = JobDescription(**job_data)
     
     questions = await generate_screening_questions(candidate, job)
     return questions
@@ -92,35 +129,32 @@ async def generate_questions(candidate_id: str, job_id: str):
 async def initiate_call(request: CallRequest):
     """
     Initiate a screening call to the candidate via ElevenLabs + Twilio.
-    
-    Requires environment variables:
-    - ELEVENLABS_API_KEY: Your ElevenLabs API key
-    - ELEVENLABS_AGENT_ID: Default agent ID (can be overridden in request)
-    - ELEVENLABS_PHONE_NUMBER_ID: Default Twilio phone number ID (can be overridden)
     """
-    if request.candidate_id not in candidates_db:
+    candidate_data = get_candidate_by_id(request.candidate_id)
+    if not candidate_data:
         raise HTTPException(status_code=404, detail="Candidate not found")
-    if request.job_id not in jobs_db:
+    
+    job_data = get_job_by_id(request.job_id)
+    if not job_data:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    candidate = candidates_db[request.candidate_id]
-    job = jobs_db[request.job_id]
+    candidate = Candidate(**candidate_data)
+    job = JobDescription(**job_data)
     
-    # Validate phone number
-    if not candidate.phone:
-        raise HTTPException(status_code=400, detail="Candidate has no phone number")
+    phone_to_call = request.phone_override or candidate.phone
     
-    # Get ElevenLabs config from request or environment
+    if not phone_to_call:
+        raise HTTPException(status_code=400, detail="No phone number available")
+    
     agent_id = request.agent_id or os.getenv("ELEVENLABS_AGENT_ID")
     phone_number_id = request.agent_phone_number_id or os.getenv("ELEVENLABS_PHONE_NUMBER_ID")
     
     if not agent_id:
-        raise HTTPException(status_code=400, detail="agent_id required (set ELEVENLABS_AGENT_ID env var or pass in request)")
+        raise HTTPException(status_code=400, detail="agent_id required")
     if not phone_number_id:
-        raise HTTPException(status_code=400, detail="agent_phone_number_id required (set ELEVENLABS_PHONE_NUMBER_ID env var or pass in request)")
+        raise HTTPException(status_code=400, detail="agent_phone_number_id required")
     
-    # Register candidate phone for inbound call recognition
-    register_candidate_phone(candidate.phone, {
+    register_candidate_phone(phone_to_call, {
         "full_name": candidate.full_name,
         "job_title": job.title,
         "skills": candidate.skills,
@@ -128,61 +162,97 @@ async def initiate_call(request: CallRequest):
         "job_id": request.job_id,
     })
     
-    # Generate a custom first message
-    first_message = f"Hi {candidate.full_name}! This is a call regarding your application for the {job.title} position. I'm an AI assistant and I'll be asking you a few screening questions. Is now a good time to talk?"
+    first_message = f"Hi {candidate.full_name}! This is an AI assistant calling from {job.company or 'the hiring team'} regarding your application for the {job.title} position. Do you have about 5 to 10 minutes for a quick screening chat?"
     
-    # Make the outbound call via ElevenLabs
     result = await initiate_outbound_call(
         agent_id=agent_id,
         agent_phone_number_id=phone_number_id,
-        to_number=candidate.phone,
+        to_number=phone_to_call,
         candidate_name=candidate.full_name,
         job_title=job.title,
+        company_name=job.company or "the hiring team",
         candidate_skills=candidate.skills,
+        resume_text=candidate.resume_text,  # Still stored for future use
+        job_description=job.description or str(job.required_skills),
         custom_first_message=first_message,
+        # Pass structured data for better LLM understanding
+        candidate_summary=candidate.summary,
+        work_experience=[exp.dict() for exp in candidate.work_experience] if candidate.work_experience else None,
+        education=[edu.dict() for edu in candidate.education] if candidate.education else None,
+        certifications=candidate.certifications,
+        years_of_experience=candidate.years_of_experience,
+        current_job_title=candidate.current_job_title,
+        current_company=candidate.current_company,
     )
     
-    # Create call status record
     call_id = str(uuid.uuid4())
     call_status = CallStatus(
         call_id=call_id,
         candidate_id=request.candidate_id,
+        job_id=request.job_id,
         status="initiated" if result.success else "failed",
         conversation_id=result.conversation_id,
         call_sid=result.call_sid,
-        questions_asked=[],  # Questions handled by ElevenLabs agent prompt
+        questions_asked=[],
         transcript=None,
         summary=result.message if not result.success else None
     )
     
-    calls_db[call_id] = call_status
+    upsert_call(call_status.dict())
     
     if not result.success:
         raise HTTPException(status_code=500, detail=result.message)
     
     return call_status
 
+
+# ============ CALL ROUTES ============
+
 @router.get("/calls/{call_id}", response_model=CallStatus)
-async def get_call_status(call_id: str):
+def get_call_status(call_id: str):
     """
     Get the status of a screening call.
     """
-    if call_id not in calls_db:
+    call_data = get_call_by_id(call_id)
+    if not call_data:
         raise HTTPException(status_code=404, detail="Call not found")
-    return calls_db[call_id]
+    return CallStatus(**call_data)
 
 @router.get("/calls/{call_id}/details")
 async def get_call_details(call_id: str):
     """
-    Get detailed conversation data from ElevenLabs (transcript, etc.)
+    Get detailed conversation data from ElevenLabs.
     """
-    if call_id not in calls_db:
+    call_data = get_call_by_id(call_id)
+    if not call_data:
         raise HTTPException(status_code=404, detail="Call not found")
     
-    call = calls_db[call_id]
+    call = CallStatus(**call_data)
     if not call.conversation_id:
         raise HTTPException(status_code=400, detail="No conversation ID for this call")
     
     details = await get_conversation_details(call.conversation_id)
     return details
 
+
+# ============ CANDIDATE BY ID ROUTES (MUST BE LAST - CATCH-ALL) ============
+
+@router.get("/{candidate_id}", response_model=Candidate)
+def get_candidate(candidate_id: str):
+    """
+    Get a specific candidate by ID.
+    """
+    c_data = get_candidate_by_id(candidate_id)
+    if not c_data:
+         raise HTTPException(status_code=404, detail="Candidate not found")
+    return Candidate(**c_data)
+
+@router.delete("/{candidate_id}")
+def delete_candidate(candidate_id: str):
+    """
+    Delete a candidate by ID.
+    """
+    deleted = db_delete_candidate(candidate_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    return {"message": "Candidate deleted successfully", "id": candidate_id}

@@ -35,26 +35,25 @@ async def initiate_outbound_call(
     to_number: str,
     candidate_name: Optional[str] = None,
     job_title: Optional[str] = None,
+    company_name: Optional[str] = None,
     candidate_skills: Optional[list] = None,
+    resume_text: Optional[str] = None,  # Kept for storage, but structured data preferred
+    job_description: Optional[str] = None,
     custom_first_message: Optional[str] = None,
     dynamic_variables: Optional[dict] = None,
+    # New structured data fields
+    candidate_summary: Optional[str] = None,
+    work_experience: Optional[list] = None,
+    education: Optional[list] = None,
+    certifications: Optional[list] = None,
+    years_of_experience: Optional[int] = None,
+    current_job_title: Optional[str] = None,
+    current_company: Optional[str] = None,
 ) -> OutboundCallResponse:
     """
-    Initiate an outbound call via ElevenLabs Twilio integration.
-    
-    Args:
-        agent_id: ElevenLabs Agent ID
-        agent_phone_number_id: Twilio phone number ID configured in ElevenLabs
-        to_number: Candidate's phone number to call
-        candidate_name: Candidate's name for personalization
-        job_title: Job title being screened for
-        candidate_skills: List of candidate's skills
-        custom_first_message: Override the first message
-        dynamic_variables: Additional dynamic variables for the agent
-    
-    Returns:
-        OutboundCallResponse with conversation_id and call_sid
+    Initiate an outbound call using ElevenLabs Conversational AI + Twilio.
     """
+    # Get API key from environment
     api_key = os.getenv("ELEVENLABS_API_KEY")
     if not api_key:
         return OutboundCallResponse(
@@ -70,8 +69,52 @@ async def initiate_outbound_call(
         variables["candidate_name"] = candidate_name
     if job_title:
         variables["job_title"] = job_title
+    if company_name:
+        variables["company_name"] = company_name
     if candidate_skills:
-        variables["candidate_skills"] = ", ".join(candidate_skills[:5])  # Top 5 skills
+        variables["candidate_skills"] = ", ".join(candidate_skills[:10])
+    if job_description:
+        variables["job_description"] = job_description[:4000] if len(job_description) > 4000 else job_description
+    
+    # Add structured candidate context (preferred over raw resume for better LLM understanding)
+    if candidate_summary:
+        variables["candidate_summary"] = candidate_summary[:2000]
+    if years_of_experience:
+        variables["years_of_experience"] = str(years_of_experience)
+    if current_job_title:
+        variables["current_job_title"] = current_job_title
+    if current_company:
+        variables["current_company"] = current_company
+    if certifications:
+        variables["certifications"] = ", ".join(certifications[:5])
+    
+    # Format work experience as readable text for LLM
+    if work_experience:
+        exp_text = []
+        for exp in work_experience[:5]:  # Limit to last 5 positions
+            if isinstance(exp, dict):
+                exp_line = f"{exp.get('job_title', 'Unknown')} at {exp.get('company', 'Unknown')}"
+                if exp.get('start_date') or exp.get('end_date'):
+                    exp_line += f" ({exp.get('start_date', '')} - {exp.get('end_date', 'Present')})"
+                if exp.get('description'):
+                    exp_line += f": {exp['description'][:200]}"
+                exp_text.append(exp_line)
+        if exp_text:
+            variables["work_experience"] = " | ".join(exp_text)[:3000]
+    
+    # Format education as readable text for LLM
+    if education:
+        edu_text = []
+        for edu in education[:3]:  # Limit to 3 entries
+            if isinstance(edu, dict):
+                edu_line = f"{edu.get('degree', 'Degree')} from {edu.get('institution', 'Institution')}"
+                if edu.get('field_of_study'):
+                    edu_line += f" in {edu['field_of_study']}"
+                if edu.get('graduation_date'):
+                    edu_line += f" ({edu['graduation_date']})"
+                edu_text.append(edu_line)
+        if edu_text:
+            variables["education"] = " | ".join(edu_text)
     
     # Build conversation config override
     conversation_config_override = {}

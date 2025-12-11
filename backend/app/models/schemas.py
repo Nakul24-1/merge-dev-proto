@@ -29,6 +29,7 @@ class Candidate(BaseModel):
     education: List[Education] = Field(default_factory=list)
     years_of_experience: Optional[int] = None
     resume_text: Optional[str] = None
+    summary: Optional[str] = None  # Professional summary/objective
 
 class JobDescription(BaseModel):
     id: Optional[str] = None
@@ -52,6 +53,7 @@ class CallRequest(BaseModel):
     # ElevenLabs config - these can be set via environment or passed per request
     agent_id: Optional[str] = None  # ElevenLabs Agent ID
     agent_phone_number_id: Optional[str] = None  # Twilio phone number ID in ElevenLabs
+    phone_override: Optional[str] = None  # Override candidate's phone for testing
 
 class CallStatus(BaseModel):
     call_id: str

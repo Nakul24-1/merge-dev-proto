@@ -6,20 +6,22 @@ import './ScreeningPanel.css';
 interface ScreeningPanelProps {
     candidate: Candidate | null;
     jobs: JobDescription[];
+    onPushToCrm?: (candidateId: string) => Promise<void>;
 }
 
-export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
+export function ScreeningPanel({ candidate, jobs, onPushToCrm }: ScreeningPanelProps) {
     const [selectedJobId, setSelectedJobId] = useState<string>('');
     const [questions, setQuestions] = useState<ScreeningQuestion[]>([]);
     const [callStatus, setCallStatus] = useState<CallStatus | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [loadingAction, setLoadingAction] = useState<'questions' | 'call' | null>(null);
+    const [loadingAction, setLoadingAction] = useState<'questions' | 'call' | 'crm' | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [phoneOverride, setPhoneOverride] = useState<string>('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     if (!candidate) {
         return (
             <div className="screening-panel empty">
-                <h2>🎯 Screening Panel</h2>
                 <div className="empty-state">
                     <p>Select a candidate to start screening</p>
                 </div>
@@ -29,16 +31,13 @@ export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
 
     const handleGenerateQuestions = async () => {
         if (!selectedJobId) return;
-
         setIsLoading(true);
         setLoadingAction('questions');
         setError(null);
-
         try {
             const generatedQuestions = await generateQuestions(candidate.id!, selectedJobId);
             setQuestions(generatedQuestions);
         } catch (err) {
-            console.error('Failed to generate questions:', err);
             setError(err instanceof Error ? err.message : 'Failed to generate questions');
         } finally {
             setIsLoading(false);
@@ -47,17 +46,15 @@ export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
     };
 
     const handleInitiateCall = async () => {
-        if (!selectedJobId || !candidate.phone) return;
-
+        const phoneToCall = phoneOverride.trim() || candidate.phone;
+        if (!selectedJobId || !phoneToCall) return;
         setIsLoading(true);
         setLoadingAction('call');
         setError(null);
-
         try {
-            const status = await initiateCall(candidate.id!, selectedJobId);
+            const status = await initiateCall(candidate.id!, selectedJobId, undefined, undefined, phoneToCall);
             setCallStatus(status);
         } catch (err) {
-            console.error('Failed to initiate call:', err);
             setError(err instanceof Error ? err.message : 'Failed to initiate call');
         } finally {
             setIsLoading(false);
@@ -65,26 +62,54 @@ export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
         }
     };
 
+    const handlePushToCrm = async () => {
+        if (!onPushToCrm || !candidate.id) return;
+        setIsLoading(true);
+        setLoadingAction('crm');
+        try {
+            await onPushToCrm(candidate.id);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to push to CRM');
+        } finally {
+            setIsLoading(false);
+            setLoadingAction(null);
+        }
+    };
+
     const selectedJob = jobs.find(j => j.id === selectedJobId);
+    const effectivePhone = phoneOverride.trim() || candidate.phone;
 
     return (
         <div className="screening-panel">
-            <h2>🎯 Screening Panel</h2>
+            <div className="panel-header">
+                <h2>Screening</h2>
+            </div>
 
             <div className="candidate-detail">
                 <div className="detail-header">
                     <div className="avatar-large">
                         {candidate.full_name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
+                    <div className="detail-info">
                         <h3>{candidate.full_name}</h3>
                         <p>{candidate.current_job_title || 'No title'}</p>
                         <div className="contact-info">
-                            {candidate.phone && <span>📞 {candidate.phone}</span>}
-                            {candidate.email && <span>✉️ {candidate.email}</span>}
+                            {candidate.phone && <span>Phone: {candidate.phone}</span>}
+                            {candidate.email && <span>Email: {candidate.email}</span>}
                         </div>
                     </div>
                 </div>
+
+                {/* Big CRM Button */}
+                {onPushToCrm && (
+                    <button
+                        className="btn-crm-large"
+                        onClick={handlePushToCrm}
+                        disabled={isLoading}
+                    >
+                        {loadingAction === 'crm' ? 'Pushing...' : 'Add to HubSpot CRM'}
+                    </button>
+                )}
 
                 <div className="skills-section">
                     <h4>Skills</h4>
@@ -121,36 +146,65 @@ export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
 
             {error && (
                 <div className="error-banner">
-                    <span>⚠️</span>
                     <p>{error}</p>
-                    <button onClick={() => setError(null)}>✕</button>
+                    <button onClick={() => setError(null)}>×</button>
                 </div>
             )}
 
             {selectedJob && (
-                <div className="action-buttons">
-                    <button
-                        className="btn-generate"
-                        onClick={handleGenerateQuestions}
-                        disabled={isLoading}
-                    >
-                        {loadingAction === 'questions' ? '⏳ Generating...' : '✨ Generate Questions'}
-                    </button>
+                <>
+                    <div className="phone-override">
+                        <label htmlFor="phone-override">Test Phone Number (optional)</label>
+                        <input
+                            id="phone-override"
+                            type="tel"
+                            placeholder={candidate.phone || "Enter phone number (+1234567890)"}
+                            value={phoneOverride}
+                            onChange={(e) => setPhoneOverride(e.target.value)}
+                        />
+                        {phoneOverride && (
+                            <span className="phone-note">
+                                Calling: {phoneOverride} (instead of {candidate.phone || 'N/A'})
+                            </span>
+                        )}
+                    </div>
 
-                    <button
-                        className="btn-call"
-                        onClick={handleInitiateCall}
-                        disabled={isLoading || !candidate.phone}
-                        title={!candidate.phone ? 'No phone number available' : ''}
-                    >
-                        {loadingAction === 'call' ? '📞 Calling...' : '📞 Start Screening Call'}
-                    </button>
-                </div>
+                    <div className="action-buttons">
+                        <button
+                            className="btn-call"
+                            onClick={handleInitiateCall}
+                            disabled={isLoading || !effectivePhone}
+                        >
+                            {loadingAction === 'call' ? 'Calling...' : 'Start Screening Call'}
+                        </button>
+                    </div>
+
+                    {/* Advanced - Generate Questions (subtle) */}
+                    <div className="advanced-section">
+                        <button
+                            className="advanced-toggle"
+                            onClick={() => setShowAdvanced(!showAdvanced)}
+                        >
+                            {showAdvanced ? '▼ Hide Advanced' : '▶ Advanced Options'}
+                        </button>
+                        {showAdvanced && (
+                            <div className="advanced-content">
+                                <button
+                                    className="btn-generate"
+                                    onClick={handleGenerateQuestions}
+                                    disabled={isLoading}
+                                >
+                                    {loadingAction === 'questions' ? 'Generating...' : 'Generate Questions'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </>
             )}
 
             {questions.length > 0 && (
                 <div className="questions-preview">
-                    <h4>📝 Generated Questions ({questions.length})</h4>
+                    <h4>Generated Questions ({questions.length})</h4>
                     <ul>
                         {questions.map((q, idx) => (
                             <li key={idx}>
@@ -164,36 +218,20 @@ export function ScreeningPanel({ candidate, jobs }: ScreeningPanelProps) {
 
             {callStatus && (
                 <div className={`call-status status-${callStatus.status}`}>
-                    <h4>📞 Call Status</h4>
+                    <h4>Call Status</h4>
                     <div className="status-row">
                         <span className="status-label">Status:</span>
                         <span className={`status-badge ${callStatus.status}`}>
                             {callStatus.status.toUpperCase()}
                         </span>
                     </div>
-                    <div className="status-details">
-                        <p><span>Call ID:</span> <code>{callStatus.call_id}</code></p>
-                        {callStatus.conversation_id && (
-                            <p><span>Conversation:</span> <code>{callStatus.conversation_id}</code></p>
-                        )}
-                        {callStatus.call_sid && (
-                            <p><span>Twilio SID:</span> <code>{callStatus.call_sid}</code></p>
-                        )}
-                    </div>
                     {callStatus.status === 'initiated' && (
                         <p className="call-info">
-                            📱 The AI is now calling {candidate.full_name}...
+                            The AI is now calling {candidate.full_name}...
                         </p>
-                    )}
-                    {callStatus.transcript && (
-                        <div className="transcript">
-                            <h5>Transcript</h5>
-                            <pre>{callStatus.transcript}</pre>
-                        </div>
                     )}
                 </div>
             )}
         </div>
     );
 }
-

@@ -7,3 +7,5 @@ openai
 requests
 httpx
 elevenlabs
+psycopg2-binary
+llama-cloud-services
