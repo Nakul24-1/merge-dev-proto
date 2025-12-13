@@ -25,9 +25,7 @@ from app.db.database import (
 
 router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
-# Initialize database on import (ensure tables exist)
-init_db()
-seed_dummy_data()
+# Database initialization moved to main.py startup event for faster server startup
 
 # ============ CANDIDATE LIST ROUTES ============
 
